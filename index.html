@@ -46,6 +46,26 @@
             padding: 15px;
         }
 
+        /* नया: Search Bar CSS */
+        .search-container {
+            margin-bottom: 15px;
+        }
+        #search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: 0.3s;
+        }
+        #search-input:focus {
+            border-color: #128c7e;
+            box-shadow: 0 0 5px rgba(18, 140, 126, 0.3);
+        }
+
         .filter-container {
             display: flex;
             gap: 10px;
@@ -421,15 +441,17 @@
     </div>
 
     <div class="container">
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="🔍 नंबर या नोट्स से सर्च करें..." oninput="handleSearch(this.value)">
+        </div>
+
         <div class="filter-container">
             <button class="filter-btn active" id="btn-filter-All" onclick="applyFilter('All', this)">All (0)</button>
             <button class="filter-btn" id="btn-filter-New" onclick="applyFilter('New', this)">🔵 New (0)</button>
-            <button class="filter-btn" id="btn-filter-Follow-up" onclick="applyFilter('Follow-up', this)">⏳ Follow-up
-                (0)</button>
-            <button class="filter-btn" id="btn-filter-Converted" onclick="applyFilter('Converted', this)">✅ Converted
-                (0)</button>
-            <button class="filter-btn" id="btn-filter-Not Interested" onclick="applyFilter('Not Interested', this)">❌
-                Not Interested (0)</button>
+            <button class="filter-btn" id="btn-filter-Follow-up" onclick="applyFilter('Follow-up', this)">⏳ Follow-up (0)</button>
+            <button class="filter-btn" id="btn-filter-Converted" onclick="applyFilter('Converted', this)">✅ Converted (0)</button>
+            <button class="filter-btn" id="btn-filter-Not Interested" onclick="applyFilter('Not Interested', this)">❌ Not Interested (0)</button>
         </div>
 
         <input type="file" id="file-input" accept="image/*" multiple>
@@ -485,6 +507,7 @@
         let leadsData = new Map();
         let reviewData = new Set();
         let currentFilter = 'All';
+        let searchQuery = ''; // नया: Search Query Store करने के लिए
         let lastActiveLead = localStorage.getItem('lastActiveLead') || null;
 
         leadsRef.on('value', (snapshot) => {
@@ -550,6 +573,12 @@
             currentFilter = status;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
+            renderCRMList();
+        }
+
+        // नया: Search Input Handle Function
+        function handleSearch(query) {
+            searchQuery = query.toLowerCase().trim();
             renderCRMList();
         }
 
@@ -681,7 +710,20 @@
             let visibleCount = 0;
 
             leadsData.forEach((data, num) => {
+                // 1. Status Filter चेक
                 if (currentFilter !== 'All' && data.status !== currentFilter) return;
+                
+                // 2. Search Query Filter चेक (नंबर या नोट्स में)
+                if (searchQuery !== '') {
+                    // नोट्स में ढूँढें (अगर नोट्स खाली नहीं हैं तो)
+                    const notesMatch = data.notes ? data.notes.toLowerCase().includes(searchQuery) : false;
+                    // नंबर में ढूँढें (सर्च करते वक़्त अगर कोई स्पेस लगा दे तो उसे हटा दें)
+                    const numMatch = num.includes(searchQuery.replace(/\s/g, ''));
+                    
+                    // अगर दोनों में से किसी में भी नहीं मिला, तो इस कार्ड को छोड़ दें
+                    if (!numMatch && !notesMatch) return;
+                }
+
                 visibleCount++;
 
                 const card = document.createElement('div');
@@ -728,8 +770,13 @@
                 crmList.appendChild(card);
             });
 
+            // अगर सर्च करने पर कुछ न मिले
             if (visibleCount === 0) {
-                crmList.innerHTML = `<div class="empty-msg">इस फिल्टर (${currentFilter}) में कोई लीड नहीं है।</div>`;
+                if (searchQuery !== '') {
+                    crmList.innerHTML = `<div class="empty-msg">"${searchQuery}" से जुड़ी कोई लीड नहीं मिली।</div>`;
+                } else {
+                    crmList.innerHTML = `<div class="empty-msg">इस फिल्टर (${currentFilter}) में कोई लीड नहीं है।</div>`;
+                }
             }
         }
 
