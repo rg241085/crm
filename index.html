@@ -558,7 +558,7 @@
             leadsData.forEach((data) => {
                 if (data.status === 'New') countNew++;
                 if (data.status === 'Follow-up') countFollow++;
-                if (data.status === 'Converted') countConverted++; // Converted काउंट
+                if (data.status === 'Converted') countConverted++; 
                 if (data.status === 'Not Interested') countNotInterested++;
             });
 
@@ -691,7 +691,6 @@
                 if (data.status === 'Follow-up') card.style.borderLeftColor = '#f0ad4e';
                 if (data.status === 'Not Interested') card.style.borderLeftColor = '#dc3545';
                 if (data.status === 'New') card.style.borderLeftColor = '#007bff';
-                // Converted लीड्स के लिए हरा रंग
                 if (data.status === 'Converted') card.style.borderLeftColor = '#28a745';
 
                 let lastActionHtml = data.lastAction ? `<div class="action-time">${data.lastAction}</div>` : '';
@@ -723,7 +722,7 @@
                 </div>
                 <div class="input-group">
                     <label>Notes / Remarks</label>
-                    <textarea placeholder="कस्टमर को क्या चाहिए..." onkeyup="updateFirebaseField('${num}', 'notes', this.value)" onclick="setActiveLead('${num}')">${data.notes || ''}</textarea>
+                    <textarea placeholder="कस्टमर को क्या चाहिए..." onchange="updateFirebaseField('${num}', 'notes', this.value)" onclick="setActiveLead('${num}')">${data.notes || ''}</textarea>
                 </div>
             `;
                 crmList.appendChild(card);
@@ -737,8 +736,6 @@
         function updateFirebaseField(num, field, value) {
             lastActiveLead = num;
             localStorage.setItem('lastActiveLead', num);
-
-            // अब कोई डेटा डिलीट नहीं होगा, सीधा Firebase में अपडेट होगा
             db.ref(`leads/${num}/${field}`).set(value);
         }
 
